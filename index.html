@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ABG — New Souls Database</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════
+   DESIGN: Clean "ministry records" aesthetic —
+   warm ivory + deep navy + gold accents. Feels
+   institutional but dignified. Light theme for
+   outdoor/daylight mobile use.
+══════════════════════════════════════════════════ */
+:root {
+  --navy:    #0D1B2A;
+  --blue:    #1F4E79;
+  --mblue:   #2E75B6;
+  --sky:     #4A90C4;
+  --ivory:   #FAF7F2;
+  --cream:   #F3EFE8;
+  --warm:    #EDE8DF;
+  --gold:    #B8860B;
+  --goldlt:  #D4A017;
+  --goldbg:  #FEF9EC;
+  --white:   #FFFFFF;
+  --ink:     #1A1A2E;
+  --ink2:    #3D3D5C;
+  --ink3:    #6B6B8A;
+  --ink4:    #9B9BB8;
+  --border:  #DDD8CF;
+  --green:   #166534;
+  --greenbg: #F0FDF4;
+  --red:     #991B1B;
+  --redbg:   #FEF2F2;
+  --amber:   #92400E;
+  --amberbg: #FFFBEB;
+  --sh:      0 2px 12px rgba(13,27,42,.08);
+  --sh-md:   0 4px 20px rgba(13,27,42,.12);
+  --sh-lg:   0 8px 32px rgba(13,27,42,.16);
+  --r:       14px;
+  --safe-t:  env(safe-area-inset-top,0px);
+  --safe-b:  env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%;font-size:15px}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--ivory);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+/* ── SIDEBAR NAV (desktop) / BOTTOM NAV (mobile) ── */
+#layout{display:flex;min-height:100vh}
+
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--navy);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:40;
+  padding:0 0 calc(var(--safe-b) + 16px);
+}
+.sidebar-brand{
+  padding:calc(var(--safe-t) + 20px) 20px 20px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.sb-church{font-size:9px;font-weight:600;letter-spacing:3px;color:var(--goldlt);text-transform:uppercase;margin-bottom:6px}
+.sb-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:#fff;line-height:1.2}
+.sb-title em{color:var(--goldlt);font-style:normal}
+.sidebar-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+  color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;
+  transition:all .18s;border:none;background:none;width:100%;text-align:left;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.nav-item.active{background:rgba(46,117,182,.25);color:#fff;font-weight:600}
+.nav-item.active .ni{color:var(--goldlt)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 20px;font-size:11px;color:rgba(255,255,255,.25)}
+
+/* sync pill in sidebar */
+.sync-pill{
+  margin:0 10px 8px;padding:7px 12px;border-radius:8px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:7px;cursor:pointer;
+}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;flex-shrink:0}
+.sync-dot.loading{background:var(--goldlt);animation:blink .8s ease-in-out infinite alternate}
+.sync-dot.error{background:#F87171}
+@keyframes blink{to{opacity:.2}}
+.sync-txt{font-size:10px;color:rgba(255,255,255,.4);flex:1;line-height:1.3}
+
+/* ── MAIN CONTENT ── */
+#main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.page-header{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:18px 24px;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:30;
+}
+.ph-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--navy)}
+.ph-sub{font-size:12px;color:var(--ink3);margin-top:1px}
+.page-body{padding:24px 28px;flex:1}
+
+/* ── KPI CARDS ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;margin-bottom:24px}
+.kpi{
+  background:var(--white);border:1px solid var(--border);border-radius:var(--r);
+  padding:16px 18px;cursor:default;transition:box-shadow .18s;
+}
+.kpi:hover{box-shadow:var(--sh-md)}
+.kpi-n{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:var(--navy);line-height:1}
+.kpi-l{font-size:11px;color:var(--ink3);margin-top:4px;letter-spacing:.3px}
+.kpi-bar{height:3px;border-radius:2px;margin-top:10px;background:var(--warm)}
+.kpi-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--sky));transition:width .5s ease}
+
+/* ── SEARCH + CONTROLS BAR ── */
+.ctrl-bar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+.search-wrap{flex:1;min-width:180px;position:relative}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink4);pointer-events:none}
+.search-inp{
+  width:100%;padding:9px 12px 9px 36px;
+  background:var(--white);border:1px solid var(--border);border-radius:10px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--ink);
+  outline:none;transition:border-color .18s;
+}
+.search-inp:focus{border-color:var(--sky)}
+.search-inp::placeholder{color:var(--ink4)}
+.fpill{
+  padding:8px 14px;border-radius:20px;border:1px solid var(--border);
+  background:var(--white);color:var(--ink3);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .18s;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;
+}
+.fpill.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn{
+  padding:9px 18px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;
+  transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--mblue);box-shadow:var(--sh-md)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--goldlt));color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--ink2)}
+.btn-ghost:hover{background:var(--cream);border-color:var(--ink4)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* ── CONVERT TABLE ── */
+.table-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse}
+thead th{
+  background:var(--navy);color:rgba(255,255,255,.85);
+  font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;
+  padding:11px 14px;text-align:left;
+}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--cream)}
+tbody td{padding:11px 14px;font-size:13px;color:var(--ink2)}
+.td-name{font-weight:600;color:var(--ink)}
+.td-reg{font-size:11px;color:var(--ink4);font-weight:500;letter-spacing:.3px}
+.avatar-sm{
+  width:32px;height:32px;border-radius:9px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;color:#fff;
+  vertical-align:middle;margin-right:9px;
+}
+.status-tag{
+  display:inline-block;font-size:10px;font-weight:600;letter-spacing:.4px;
+  text-transform:uppercase;padding:2px 8px;border-radius:20px;
+}
+.st-active  {background:var(--greenbg);color:var(--green)}
+.st-inactive{background:var(--redbg);color:var(--red)}
+.st-pending {background:var(--amberbg);color:var(--amber)}
+.td-actions{display:flex;gap:6px;align-items:center}
+.icon-btn{
+  width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+  background:var(--cream);color:var(--ink3);
+}
+.icon-btn:hover{background:var(--blue);color:#fff}
+.icon-btn.danger:hover{background:var(--red);color:#fff}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:60px 20px;color:var(--ink4)}
+.empty svg{opacity:.3;margin-bottom:12px}
+.empty strong{font-size:15px;color:var(--ink3);display:block;margin-bottom:6px}
+
+/* ══════ DRAWER (slide-in panel) ══════════════════ */
+.drawer-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(13,27,42,.45);backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.drawer-overlay.show{opacity:1;pointer-events:all}
+.drawer{
+  position:absolute;right:0;top:0;bottom:0;width:100%;max-width:560px;
+  background:var(--white);box-shadow:var(--sh-lg);
+  overflow-y:auto;transform:translateX(100%);transition:transform .3s cubic-bezier(.32,1.25,.5,1);
+  display:flex;flex-direction:column;
+}
+.drawer-overlay.show .drawer{transform:translateX(0)}
+.drawer-head{
+  padding:20px 24px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  position:sticky;top:0;background:var(--white);z-index:5;
+}
+.dh-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--navy)}
+.dh-sub{font-size:12px;color:var(--ink3);margin-top:2px}
+.close-btn{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+  background:var(--cream);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;color:var(--ink3);flex-shrink:0;transition:all .15s;
+}
+.close-btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.drawer-body{padding:24px;flex:1}
+.drawer-footer{
+  padding:16px 24px calc(var(--safe-b) + 16px);border-top:1px solid var(--border);
+  display:flex;gap:10px;background:var(--white);position:sticky;bottom:0;
+}
+
+/* ── TABS inside drawer ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  padding:9px 16px;font-size:13px;font-weight:500;color:var(--ink3);cursor:pointer;
+  border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;
+  font-family:'Plus Jakarta Sans',sans-serif;background:none;border-top:none;border-left:none;border-right:none;
+}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+
+/* ── FORM ELEMENTS ── */
+.form-section{margin-bottom:20px}
+.fs-title{
+  font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--blue);margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid var(--border);
+}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.frow{margin-bottom:12px}
+.flbl{font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:5px}
+.finput,.fselect,.ftextarea{
+  width:100%;padding:9px 12px;
+  background:var(--ivory);border:1px solid var(--border);border-radius:9px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--ink);
+  outline:none;transition:border-color .18s,background .18s;
+}
+.finput:focus,.fselect:focus,.ftextarea:focus{border-color:var(--sky);background:var(--white)}
+.finput::placeholder{color:var(--ink4)}
+.fselect{cursor:pointer}
+.ftextarea{resize:vertical;min-height:72px;line-height:1.5}
+.req{color:var(--red);margin-left:2px}
+
+/* radio group */
+.radio-row{display:flex;gap:6px;flex-wrap:wrap}
+.radio-opt{
+  padding:7px 13px;border-radius:20px;border:1.5px solid var(--border);
+  font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;
+  font-family:'Plus Jakarta Sans',sans-serif;background:var(--white);color:var(--ink3);
+}
+.radio-opt.sel{border-color:var(--blue);background:var(--blue);color:#fff}
+
+/* ── ATTENDANCE GRID ── */
+.att-grid{display:flex;flex-direction:column;gap:10px}
+.att-week{
+  background:var(--ivory);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.att-date{font-size:12px;font-weight:600;color:var(--ink2);min-width:80px}
+.att-opts{display:flex;gap:6px}
+.att-opt{
+  padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);
+  font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;
+  font-family:'Plus Jakarta Sans',sans-serif;background:var(--white);color:var(--ink3);
+}
+.att-opt.P{border-color:var(--green);background:var(--greenbg);color:var(--green)}
+.att-opt.A{border-color:var(--red);background:var(--redbg);color:var(--red)}
+.att-opt.L{border-color:var(--amber);background:var(--amberbg);color:var(--amber)}
+.att-opt.E{border-color:var(--sky);background:#EFF8FF;color:var(--sky)}
+.att-note{flex:1;min-width:120px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);
+  font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;background:var(--white);color:var(--ink);outline:none}
+.att-note:focus{border-color:var(--sky)}
+.att-pct{font-size:11px;font-weight:600;color:var(--ink4);margin-left:auto}
+
+/* ── CLASS PROGRESS ── */
+.module-card{
+  background:var(--ivory);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;margin-bottom:10px;
+}
+.mc-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.mc-num{
+  width:28px;height:28px;border-radius:8px;background:var(--blue);
+  color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.mc-title{font-weight:600;font-size:14px;color:var(--ink)}
+.mc-done{margin-left:auto}
+.check-lbl{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink3)}
+.check-lbl input{width:15px;height:15px;cursor:pointer;accent-color:var(--green)}
+.check-lbl.done{color:var(--green)}
+.mc-body{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── MENTOR SECTION ── */
+.mentor-card{background:var(--ivory);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.meeting-row{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.meeting-label{font-size:12px;font-weight:600;color:var(--ink3);min-width:70px}
+
+/* ── DETAIL VIEW (profile) ── */
+.profile-head{
+  background:linear-gradient(135deg,var(--navy),var(--blue));
+  border-radius:var(--r);padding:20px;margin-bottom:18px;
+  display:flex;align-items:flex-start;gap:16px;
+}
+.profile-avatar{
+  width:56px;height:56px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#fff;
+}
+.profile-info{flex:1}
+.profile-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:3px}
+.profile-reg{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px}
+.profile-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.ptag{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.7)}
+
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.detail-item{background:var(--ivory);border:1px solid var(--border);border-radius:9px;padding:10px 12px}
+.di-label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:3px}
+.di-value{font-size:13px;font-weight:500;color:var(--ink)}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:calc(var(--safe-b) + 16px);left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--navy);color:#fff;padding:10px 20px;
+  border-radius:40px;font-size:13px;font-weight:500;z-index:300;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  display:flex;align-items:center;gap:7px;white-space:nowrap;box-shadow:var(--sh-lg);
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.tdot{width:7px;height:7px;border-radius:50%;background:#4ADE80;flex-shrink:0}
+.tdot.warn{background:#FBB040}.tdot.err{background:#F87171}
+
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:768px){
+  /* sidebar slides off-screen on mobile */
+  .sidebar{transform:translateX(-100%);transition:transform .3s;z-index:50}
+  .sidebar.mobile-open{transform:translateX(0)}
+
+  /* main fills full width */
+  #main{margin-left:0 !important}
+
+  /* page header: not sticky on mobile (avoids disappearing) */
+  .page-header{
+    position:relative !important;
+    top:auto !important;
+    padding:14px 16px 12px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  /* tighter page body */
+  .page-body{padding:14px 12px}
+
+  /* show hamburger */
+  .mob-menu-btn{display:flex !important}
+
+  /* single-column forms */
+  .f2,.f3{grid-template-columns:1fr !important}
+  .detail-grid{grid-template-columns:1fr !important}
+
+  /* KPI cards: 2 columns on mobile */
+  .kpi-row{grid-template-columns:repeat(2,1fr) !important;gap:10px}
+  .kpi{padding:12px 14px}
+  .kpi-n{font-size:28px}
+
+  /* hide less important table columns on small screens */
+  table thead th:nth-child(3),
+  table tbody td:nth-child(3),
+  table thead th:nth-child(4),
+  table tbody td:nth-child(4){display:none}
+
+  /* drawer full-screen on mobile */
+  .drawer{max-width:100% !important;border-radius:20px 20px 0 0}
+
+  /* dashboard recent table */
+  #dashRecent table{font-size:12px}
+
+  /* ctrl bar wraps nicely */
+  .ctrl-bar{flex-wrap:wrap}
+  .search-wrap{min-width:100% !important}
+
+  /* attendance grid */
+  .att-week{flex-direction:column;align-items:flex-start;gap:8px}
+  .att-opts{flex-wrap:wrap}
+
+  /* module card body single column */
+  .mc-body{grid-template-columns:1fr !important}
+
+  /* meeting row wraps */
+  .meeting-row{flex-direction:column;align-items:flex-start;gap:6px}
+
+  /* page title smaller */
+  .ph-title{font-size:20px}
+}
+
+@media(min-width:769px){
+  .mob-menu-btn{display:none !important}
+}
+.mob-menu-btn{
+  width:36px;height:36px;border-radius:9px;background:var(--cream);border:1px solid var(--border);
+  cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--ink2);
+  flex-shrink:0;
+}
+.mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:39;display:none}
+.mob-overlay.show{display:block}
+
+/* ── LOADING SKELETON ── */
+.skeleton{background:linear-gradient(90deg,var(--warm) 25%,var(--cream) 50%,var(--warm) 75%);
+  background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:14px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--warm);border-radius:3px}
+
+/* ── LOGIN SCREEN ── */
+#loginScreen {
+  position:fixed;inset:0;z-index:999;
+  background:var(--navy);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+#loginScreen::before {
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 55% at 20% 10%, rgba(46,117,182,.22) 0%,transparent 60%),
+    radial-gradient(ellipse 55% 65% at 85% 92%, rgba(180,134,11,.13) 0%,transparent 55%),
+    repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,255,255,.018) 60px),
+    repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,255,255,.018) 60px);
+}
+.login-card {
+  position:relative;z-index:1;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:24px;width:100%;max-width:400px;
+  padding:40px 36px 36px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 24px 64px rgba(0,0,0,.4);
+  animation:loginIn .45s cubic-bezier(.32,1.25,.5,1) both;
+}
+@keyframes loginIn{from{opacity:0;transform:translateY(28px) scale(.97)}to{opacity:1;transform:none}}
+.login-logo {
+  text-align:center;margin-bottom:32px;
+}
+.login-church {
+  font-size:10px;font-weight:700;letter-spacing:4px;color:var(--goldlt);
+  text-transform:uppercase;margin-bottom:8px;
+}
+.login-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:28px;font-weight:700;color:#fff;line-height:1.15;
+}
+.login-title em{color:var(--goldlt);font-style:normal}
+.login-sub {
+  font-size:12px;color:rgba(255,255,255,.35);margin-top:6px;
+}
+.login-divider {
+  height:1px;background:rgba(255,255,255,.08);margin:0 -36px 28px;
+}
+.login-frow{margin-bottom:16px}
+.login-lbl {
+  display:block;font-size:10px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px;
+}
+.login-input {
+  width:100%;padding:12px 14px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  border-radius:11px;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:15px;outline:none;transition:border-color .2s,background .2s;
+}
+.login-input::placeholder{color:rgba(255,255,255,.25)}
+.login-input:focus{border-color:rgba(91,163,217,.6);background:rgba(255,255,255,.10)}
+.login-pw-wrap{position:relative}
+.login-pw-wrap .login-input{padding-right:44px}
+.pw-toggle {
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:rgba(255,255,255,.35);
+  padding:4px;transition:color .15s;
+}
+.pw-toggle:hover{color:rgba(255,255,255,.7)}
+.login-btn {
+  width:100%;padding:14px;border-radius:12px;border:none;
+  background:linear-gradient(135deg,var(--blue),var(--mblue));
+  color:#fff;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:all .2s;margin-top:8px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.login-btn:hover{box-shadow:0 6px 20px rgba(46,117,182,.5);transform:translateY(-1px)}
+.login-btn:active{transform:scale(.98)}
+.login-btn:disabled{opacity:.6;pointer-events:none}
+.login-error {
+  background:rgba(153,27,27,.2);border:1px solid rgba(153,27,27,.4);
+  border-radius:9px;padding:10px 14px;font-size:12px;
+  color:#FCA5A5;margin-top:12px;text-align:center;display:none;
+  animation:shake .3s ease;
+}
+.login-error.show{display:block}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.login-footer{
+  margin-top:24px;text-align:center;
+  font-size:11px;color:rgba(255,255,255,.2);line-height:1.6;
+}
+
+/* ── USER PILL in sidebar footer ── */
+.user-pill {
+  margin:0 10px 8px;padding:8px 12px;border-radius:9px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:8px;
+}
+.user-avatar {
+  width:28px;height:28px;border-radius:8px;
+  background:linear-gradient(135deg,var(--blue),var(--mblue));
+  color:#fff;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:10px;color:rgba(255,255,255,.35)}
+.logout-btn {
+  width:26px;height:26px;border-radius:7px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;flex-shrink:0;
+  font-size:13px;
+}
+.logout-btn:hover{background:rgba(153,27,27,.3);border-color:rgba(153,27,27,.5);color:#FCA5A5}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-church">ABG Pentecost Assembly</div>
+      <div class="login-title">New Souls <em>Database</em></div>
+      <div class="login-sub">Authorised committee access only</div>
+    </div>
+    <div class="login-divider"></div>
+    <form onsubmit="doLogin(event)">
+      <div class="login-frow">
+        <label class="login-lbl">Username</label>
+        <input class="login-input" id="loginUser" placeholder="Enter your username" autocomplete="username" autocapitalize="none" spellcheck="false">
+      </div>
+      <div class="login-frow">
+        <label class="login-lbl">Password</label>
+        <div class="login-pw-wrap">
+          <input class="login-input" id="loginPass" type="password" placeholder="Enter your password" autocomplete="current-password">
+          <button type="button" class="pw-toggle" onclick="togglePw()" id="pwToggleBtn" title="Show/hide password">
+            <svg id="pwEye" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Sign In
+      </button>
+      <div class="login-error" id="loginError">Incorrect username or password. Please try again.</div>
+    </form>
+    <div class="login-footer">
+      Contact the committee leader to request access.<br>
+      ABG Pentecost Assembly · New Souls Retention Committee
+    </div>
+  </div>
+</div>
+
+<!-- Mobile sidebar overlay -->
+<div class="mob-overlay" id="mobOverlay" onclick="closeMobSidebar()"></div>
+
+<div id="layout">
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sb-church">ABG Pentecost Assembly</div>
+      <div class="sb-title">New Souls <em>Database</em></div>
+    </div>
+    <nav class="sidebar-nav" id="sideNav">
+      <button class="nav-item active" data-page="dashboard" onclick="navigate('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-page="converts" onclick="navigate('converts',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        All Converts
+      </button>
+      <button class="nav-item" data-page="register" onclick="navigate('register',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Register Convert
+      </button>
+      <button class="nav-item" data-page="attendance" onclick="navigate('attendance',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Attendance
+      </button>
+      <button class="nav-item" data-page="classes" onclick="navigate('classes',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Class Progress
+      </button>
+      <button class="nav-item" data-page="mentors" onclick="navigate('mentors',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Mentor Tracker
+      </button>
+    </nav>
+    <div class="sync-pill" onclick="loadAll()">
+      <div class="sync-dot" id="syncDot"></div>
+      <div class="sync-txt" id="syncTxt">Loading…</div>
+    </div>
+    <div class="user-pill">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="userName">—</div>
+        <div class="user-role" id="userRole">Committee Member</div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" title="Sign out">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+    <div class="sidebar-footer">New Souls Retention Committee</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main id="main">
+    <!-- Page: Dashboard -->
+    <div id="page-dashboard" class="page">
+      <div class="page-header">
+        <button class="mob-menu-btn" onclick="openMobSidebar()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div><div class="ph-title">Dashboard</div><div class="ph-sub">Retention overview at a glance</div></div>
+      </div>
+      <div class="page-body">
+        <div class="kpi-row" id="kpiRow">
+          <div class="kpi"><div class="kpi-n" id="kTotal">–</div><div class="kpi-l">Total Converts</div><div class="kpi-bar"><div class="kpi-bar-fill" id="kbTotal" style="width:100%"></div></div></div>
+          <div class="kpi"><div class="kpi-n" id="kActive">–</div><div class="kpi-l">Active</div><div class="kpi-bar"><div class="kpi-bar-fill" id="kbActive" style="background:linear-gradient(90deg,#166534,#4ADE80)"></div></div></div>
+          <div class="kpi"><div class="kpi-n" id="kBaptised">–</div><div class="kpi-l">Baptised</div><div class="kpi-bar"><div class="kpi-bar-fill" id="kbBaptised" style="background:linear-gradient(90deg,#0E7490,#67E8F9)"></div></div></div>
+          <div class="kpi"><div class="kpi-n" id="kClass">–</div><div class="kpi-l">Class Completed</div><div class="kpi-bar"><div class="kpi-bar-fill" id="kbClass" style="background:linear-gradient(90deg,var(--gold),var(--goldlt))"></div></div></div>
+          <div class="kpi"><div class="kpi-n" id="kMentors">–</div><div class="kpi-l">Mentors Assigned</div><div class="kpi-bar"><div class="kpi-bar-fill" id="kbMentors" style="background:linear-gradient(90deg,#6B21A8,#C084FC)"></div></div></div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--sh)">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:14px">Recent Converts</div>
+          <div id="dashRecent"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page: All Converts -->
+    <div id="page-converts" class="page" style="display:none">
+      <div class="page-header">
+        <button class="mob-menu-btn" onclick="openMobSidebar()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div><div class="ph-title">All Converts</div><div class="ph-sub" id="convertCount">Loading…</div></div>
+        <button class="btn btn-primary" onclick="navigate('register')">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+          Register New
+        </button>
+      </div>
+      <div class="page-body">
+        <div class="ctrl-bar">
+          <div class="search-wrap">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-inp" id="convertSearch" placeholder="Search name, phone, group, mentor…" oninput="renderConverts()">
+          </div>
+          <button class="fpill active" data-f="all" onclick="setConvertFilter(this)">All</button>
+          <button class="fpill" data-f="Active" onclick="setConvertFilter(this)">Active</button>
+          <button class="fpill" data-f="Inactive" onclick="setConvertFilter(this)">Inactive</button>
+          <button class="fpill" data-f="Pending" onclick="setConvertFilter(this)">Pending</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Convert</th><th>Phone</th><th>Salvation Date</th><th>Mentor / Group</th><th>Status</th><th></th>
+            </tr></thead>
+            <tbody id="convertsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page: Register -->
+    <div id="page-register" class="page" style="display:none">
+      <div class="page-header">
+        <button class="mob-menu-btn" onclick="openMobSidebar()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div><div class="ph-title" id="regPageTitle">Register New Convert</div><div class="ph-sub">Complete all required fields</div></div>
+      </div>
+      <div class="page-body">
+        <form id="regForm" onsubmit="submitConvert(event)" style="max-width:680px">
+          <!-- Section A: Personal -->
+          <div class="form-section">
+            <div class="fs-title">A — Personal Details</div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Full Name <span class="req">*</span></label><input class="finput" id="f-name" placeholder="e.g. Abena Mensah" required></div>
+              <div class="frow"><label class="flbl">Gender</label>
+                <div class="radio-row" id="r-gender">
+                  <button type="button" class="radio-opt" data-v="Male" onclick="pickRadio('r-gender',this)">Male</button>
+                  <button type="button" class="radio-opt" data-v="Female" onclick="pickRadio('r-gender',this)">Female</button>
+                </div>
+              </div>
+            </div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Date of Birth</label><input class="finput" id="f-dob" type="date"></div>
+              <div class="frow"><label class="flbl">Marital Status</label>
+                <select class="fselect" id="f-maritalStatus">
+                  <option value="">— Select —</option>
+                  <option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option>
+                </select>
+              </div>
+            </div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Spouse Name</label><input class="finput" id="f-spouseName" placeholder="If married"></div>
+              <div class="frow"><label class="flbl">No. of Children</label><input class="finput" id="f-children" type="number" min="0" placeholder="0"></div>
+            </div>
+          </div>
+
+          <!-- Section B: Contact -->
+          <div class="form-section">
+            <div class="fs-title">B — Contact & Address</div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Phone (Primary) <span class="req">*</span></label><input class="finput" id="f-phone" type="tel" placeholder="e.g. 0244123456" required></div>
+              <div class="frow"><label class="flbl">WhatsApp No.</label><input class="finput" id="f-whatsapp" type="tel" placeholder="If different"></div>
+            </div>
+            <div class="frow"><label class="flbl">Email Address</label><input class="finput" id="f-email" type="email" placeholder="Optional"></div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Area / Community</label><input class="finput" id="f-area" placeholder="e.g. Dansoman"></div>
+              <div class="frow"><label class="flbl">City / Town</label><input class="finput" id="f-city" placeholder="e.g. Accra"></div>
+            </div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Region</label><input class="finput" id="f-region" placeholder="e.g. Greater Accra"></div>
+              <div class="frow"><label class="flbl">Address / Landmark</label><input class="finput" id="f-address" placeholder="Street or landmark"></div>
+            </div>
+          </div>
+
+          <!-- Section C: Occupation -->
+          <div class="form-section">
+            <div class="fs-title">C — Occupation & Education</div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Occupation / Job</label><input class="finput" id="f-occupation" placeholder="e.g. Teacher"></div>
+              <div class="frow"><label class="flbl">Education Level</label>
+                <select class="fselect" id="f-education">
+                  <option value="">— Select —</option>
+                  <option>Primary</option><option>JHS/Middle</option><option>SHS/Secondary</option>
+                  <option>Tertiary/University</option><option>Vocational</option><option>Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section D: Salvation -->
+          <div class="form-section">
+            <div class="fs-title">D — Salvation Details</div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Date of Salvation <span class="req">*</span></label><input class="finput" id="f-salvationDate" type="date" required></div>
+              <div class="frow"><label class="flbl">How Did You Hear About Us?</label>
+                <select class="fselect" id="f-howHeard">
+                  <option value="">— Select —</option>
+                  <option>Friend / Family</option><option>Street Evangelism</option>
+                  <option>Social Media</option><option>Revival / Crusade</option><option>Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Previously Attended Another Church?</label>
+                <div class="radio-row" id="r-prevChurch">
+                  <button type="button" class="radio-opt" data-v="Yes" onclick="pickRadio('r-prevChurch',this)">Yes</button>
+                  <button type="button" class="radio-opt" data-v="No" onclick="pickRadio('r-prevChurch',this)">No</button>
+                </div>
+              </div>
+              <div class="frow"><label class="flbl">If Yes, Which Church?</label><input class="finput" id="f-prevChurchName" placeholder="Church name"></div>
+            </div>
+            <div class="f2">
+              <div class="frow"><label class="flbl">Water Baptism Status</label>
+                <div class="radio-row" id="r-baptised">
+                  <button type="button" class="radio-opt" data-v="Yes" onclick="pickRadio('r-baptised',this)">Baptised</button>
+                  <button type="button" class="radio-opt" data-v="No" onclick="pickRadio('r-baptised',this)">Not Yet</button>
+                  <button type="button" class="radio-opt" data-v="Pending" onclick="pickRadio('r-baptised',this)">Pending</button>
+                </div>
+              </div>
+              <div class="frow"><label class="flbl">Date of Baptism</label><input class="finput" id="f-baptismDate" type="date"></div>
+            </div>
+            <div class="frow"><label class="flbl">Received the Holy Spirit?</label>
+              <div class="radio-row" id="r-holySpiritReceived">
+                <button type="button" class="radio-opt" data-v="Yes" onclick="pickRadio('r-holySpiritReceived',this)">Yes</button>
+                <button type="button" class="radio-opt" data-v="No" onclick="pickRadio('r-holySpiritReceived',this)">No</button>
+                <button type="button" class="radio-opt" data-v="Not Sure" onclick="pickRadio('r-holySpiritReceived',this)">Not Sure</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section E: Status -->
+          <div class="form-section">
+            <div class="fs-title">E — Status</div>
+            <div class="frow"><label class="flbl">Current Status</label>
+              <div class="radio-row" id="r-status">
+                <button type="button" class="radio-opt sel" data-v="Active" onclick="pickRadio('r-status',this)">Active</button>
+                <button type="button" class="radio-opt" data-v="Pending" onclick="pickRadio('r-status',this)">Pending</button>
+                <button type="button" class="radio-opt" data-v="Inactive" onclick="pickRadio('r-status',this)">Inactive</button>
+              </div>
+            </div>
+          </div>
+
+          <input type="hidden" id="f-editId">
+          <div style="display:flex;gap:10px;padding-top:8px">
+            <button type="button" class="btn btn-ghost" onclick="navigate('converts')">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="regSubmitBtn">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Save Convert
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Page: Attendance -->
+    <div id="page-attendance" class="page" style="display:none">
+      <div class="page-header">
+        <button class="mob-menu-btn" onclick="openMobSidebar()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div><div class="ph-title">Attendance Tracker</div><div class="ph-sub">Mark Sunday attendance for each convert</div></div>
+      </div>
+      <div class="page-body">
+        <div class="ctrl-bar">
+          <div class="search-wrap">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-inp" id="attSearch" placeholder="Search convert…" oninput="renderAttendancePage()">
+          </div>
+          <label class="flbl" style="margin:0;white-space:nowrap;align-self:center">Sunday Date:</label>
+          <input class="finput" id="attDate" type="date" style="width:160px" onchange="renderAttendancePage()">
+        </div>
+        <div id="attList"></div>
+      </div>
+    </div>
+
+    <!-- Page: Classes -->
+    <div id="page-classes" class="page" style="display:none">
+      <div class="page-header">
+        <button class="mob-menu-btn" onclick="openMobSidebar()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div><div class="ph-title">Class Progress</div><div class="ph-sub">Track converts through the 4-module New Converts Class</div></div>
+      </div>
+      <div class="page-body">
+        <div class="ctrl-bar">
+          <div class="search-wrap">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-inp" id="classSearch" placeholder="Search convert…" oninput="renderClassPage()">
+          </div>
+        </div>
+        <div id="classList"></div>
+      </div>
+    </div>
+
+    <!-- Page: Mentors -->
+    <div id="page-mentors" class="page" style="display:none">
+      <div class="page-header">
+        <button class="mob-menu-btn" onclick="openMobSidebar()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div><div class="ph-title">Mentor Tracker</div><div class="ph-sub">Assign mentors and track meeting records</div></div>
+      </div>
+      <div class="page-body">
+        <div class="ctrl-bar">
+          <div class="search-wrap">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-inp" id="mentorSearch" placeholder="Search convert or mentor…" oninput="renderMentorPage()">
+          </div>
+        </div>
+        <div id="mentorList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── CONVERT DETAIL DRAWER ── -->
+<div class="drawer-overlay" id="detailDrawer">
+  <div class="drawer">
+    <div class="drawer-head">
+      <div><div class="dh-title" id="ddTitle">Convert Details</div><div class="dh-sub" id="ddSub"></div></div>
+      <button class="close-btn" onclick="closeDrawer('detailDrawer')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body" id="ddBody"></div>
+    <div class="drawer-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeDrawer('detailDrawer')">Close</button>
+      <button class="btn btn-primary btn-sm" id="ddEditBtn" onclick="editFromDetail()">Edit Record</button>
+      <button class="btn btn-danger btn-sm" id="ddDelBtn" onclick="deleteFromDetail()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><div class="tdot" id="tdot"></div><span id="tmsg"></span></div>
+
+<script>
+// ╔═══════════════════════════════════════════╗
+// ║  CONFIG — replace with your Web App URL  ║
+// ╚═══════════════════════════════════════════╝
+const API = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+// ── State ─────────────────────────────────────────────────────
+let S = { converts:[], attendance:[], classData:[], mentors:[] };
+let convertFilter = 'all';
+let detailId = null;
+let editMode  = false;
+
+const MODULES = [
+  {n:1, title:'Assurance of Salvation'},
+  {n:2, title:'Baptism & the Holy Spirit'},
+  {n:3, title:'Christian Living & Disciplines'},
+  {n:4, title:'The Church & Its Mission'},
+];
+const MEETING_STATUS = ['Done','Missed','Rescheduled'];
+
+const configured = () => API && !API.includes('YOUR_');
+
+// ── Helpers ───────────────────────────────────────────────────
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const today = () => new Date().toISOString().split('T')[0];
+const fmtDate = d => { if(!d) return '—'; try{ return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) }catch{return d} };
+
+const AVPAL = [['1F4E79','D6E4F0'],['2E75B6','BDD7EE'],['166534','D1FAE5'],['7B3F00','FDEBD0'],['6B21A8','EDE9FE'],['C00000','FFDEDE'],['0E7490','CFFAFE'],['92400E','FEF3C7']];
+const avStyle = n => { const [bg,fg]=AVPAL[(n.charCodeAt(0)||0)%AVPAL.length]; return `background:#${bg};color:#${fg}`; };
+const ini = n => (n||'?').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
+
+const $ = id => document.getElementById(id);
+const radio = gid => { const el = document.querySelector(`#${gid} .radio-opt.sel`); return el ? el.dataset.v : ''; };
+
+// ── API ───────────────────────────────────────────────────────
+async function apiFetch(params) {
+  const r = await fetch(API + '?' + new URLSearchParams(params));
+  if (!r.ok) throw new Error('Network error');
+  return r.json();
+}
+async function apiPost(body) {
+  const r = await fetch(API, { method:'POST', body:JSON.stringify(body), headers:{'Content-Type':'application/json'} });
+  if (!r.ok) throw new Error('Network error');
+  return r.json();
+}
+
+// ── Load ──────────────────────────────────────────────────────
+async function loadAll() {
+  setSyncState('loading','Syncing…');
+  if (!configured()) {
+    S = { converts: demoConverts(), attendance: demoAtt(), classData: demoClass(), mentors: demoMentors() };
+    setSyncState('error','Demo mode — not connected to Google Sheets');
+    refreshAll();
+    return;
+  }
+  try {
+    const res = await apiFetch({ action:'getAll' });
+    if (!res.success) throw new Error(res.error);
+    S = res;
+    setSyncState('ok', `Synced · ${S.converts.length} converts · ${new Date().toLocaleTimeString()}`);
+    refreshAll();
+  } catch(e) {
+    setSyncState('error','Sync failed — tap to retry');
+    toast('Could not connect to database', 'err');
+  }
+}
+
+function refreshAll() {
+  updateDashboard();
+  renderConverts();
+  renderAttendancePage();
+  renderClassPage();
+  renderMentorPage();
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function navigate(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.style.display='none');
+  $('page-'+page).style.display='block';
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const activeBtn = btn || document.querySelector(`[data-page="${page}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+  closeMobSidebar();
+  if (page === 'register' && !editMode) resetRegForm();
+}
+
+// ── Mobile Sidebar ────────────────────────────────────────────
+function openMobSidebar() { $('sidebar').classList.add('mobile-open'); $('mobOverlay').classList.add('show'); }
+function closeMobSidebar() { $('sidebar').classList.remove('mobile-open'); $('mobOverlay').classList.remove('show'); }
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function updateDashboard() {
+  const total    = S.converts.length;
+  const active   = S.converts.filter(c=>c.status==='Active').length;
+  const baptised = S.converts.filter(c=>c.baptised==='Yes').length;
+  const allComplete = id => MODULES.every(m => {
+    const r = S.classData.find(c=>c.convertId===id && String(c.module)===String(m.n));
+    return r && r.completed === 'Yes';
+  });
+  const classComp = S.converts.filter(c=>allComplete(c.id)).length;
+  const mentored  = S.mentors.filter(m=>m.mentorName).length;
+
+  $('kTotal').textContent   = total;
+  $('kActive').textContent  = active;
+  $('kBaptised').textContent= baptised;
+  $('kClass').textContent   = classComp;
+  $('kMentors').textContent = mentored;
+
+  const pct = (n,d) => d>0 ? Math.round(n/d*100)+'%' : '0%';
+  $('kbActive').style.width   = pct(active,total);
+  $('kbBaptised').style.width = pct(baptised,total);
+  $('kbClass').style.width    = pct(classComp,total);
+  $('kbMentors').style.width  = pct(mentored,total);
+
+  // Recent 6 — card list (works on all screen sizes)
+  const recent = [...S.converts].slice(0,6);
+  if (!recent.length) { $('dashRecent').innerHTML = '<div class="empty"><p>No converts registered yet.</p></div>'; return; }
+  $('dashRecent').innerHTML = recent.map(c => `
+    <div onclick="openDetail('${c.id}')" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">
+      <span class="avatar-sm" style="${avStyle(c.name)}">${ini(c.name)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</div>
+        <div style="font-size:11px;color:var(--ink4)">${esc(c.regNo||'')} &nbsp;·&nbsp; ${fmtDate(c.salvationDate)}</div>
+      </div>
+      <span class="status-tag st-${(c.status||'Active').toLowerCase()}" style="flex-shrink:0">${esc(c.status||'Active')}</span>
+    </div>`).join('');
+}
+
+// ── CONVERTS PAGE ─────────────────────────────────────────────
+function setConvertFilter(btn) {
+  convertFilter = btn.dataset.f;
+  document.querySelectorAll('#page-converts .fpill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderConverts();
+}
+
+function renderConverts() {
+  const q = ($('convertSearch').value||'').toLowerCase();
+  let list = S.converts.filter(c => {
+    const m = S.mentors.find(m=>m.convertId===c.id);
+    const txt = `${c.name} ${c.phone} ${c.area||''} ${m?.mentorName||''} ${m?.smallGroup||''}`.toLowerCase();
+    if (q && !txt.includes(q)) return false;
+    if (convertFilter !== 'all' && c.status !== convertFilter) return false;
+    return true;
+  });
+
+  $('convertCount').textContent = `${list.length} convert${list.length!==1?'s':''}`;
+
+  const tbody = $('convertsTbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">
+      <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <strong>No converts found</strong><p>Adjust your search or filter.</p>
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(c => {
+    const m = S.mentors.find(x=>x.convertId===c.id);
+    const stCls = `st-${(c.status||'Active').toLowerCase()}`;
+    return `<tr onclick="openDetail('${c.id}')">
+      <td class="td-name">
+        <span class="avatar-sm" style="${avStyle(c.name)}">${ini(c.name)}</span>
+        ${esc(c.name)}<br><span class="td-reg">${esc(c.regNo||'')}</span>
+      </td>
+      <td>${esc(c.phone||'—')}</td>
+      <td>${fmtDate(c.salvationDate)}</td>
+      <td><div style="font-size:12px">${m?.mentorName ? `🤝 ${esc(m.mentorName)}` : '<span style="color:var(--ink4)">No mentor</span>'}</div>
+          <div style="font-size:11px;color:var(--ink4)">${m?.smallGroup ? `👥 ${esc(m.smallGroup)}` : ''}</div></td>
+      <td><span class="status-tag ${stCls}">${esc(c.status||'Active')}</span></td>
+      <td><div class="td-actions" onclick="event.stopPropagation()">
+        <button class="icon-btn" onclick="openDetail('${c.id}')" title="View">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="icon-btn" onclick="editConvert('${c.id}')" title="Edit">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="icon-btn danger" onclick="deleteConvert('${c.id}')" title="Delete">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── REGISTER / EDIT FORM ──────────────────────────────────────
+function resetRegForm() {
+  editMode = false;
+  $('f-editId').value = '';
+  $('regPageTitle').textContent = 'Register New Convert';
+  document.getElementById('regSubmitBtn').innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Save Convert`;
+  $('regForm').reset();
+  ['r-gender','r-prevChurch','r-baptised','r-holySpiritReceived'].forEach(id => {
+    document.querySelectorAll(`#${id} .radio-opt`).forEach(b=>b.classList.remove('sel'));
+  });
+  // default status = Active
+  document.querySelectorAll('#r-status .radio-opt').forEach(b=>{
+    b.classList.toggle('sel', b.dataset.v==='Active');
+  });
+}
+
+function editConvert(id) {
+  const c = S.converts.find(x=>x.id===id);
+  if (!c) return;
+  editMode = true;
+  closeDrawer('detailDrawer');
+  navigate('register');
+  $('regPageTitle').textContent = 'Edit Convert Record';
+  $('regSubmitBtn').innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Update Record`;
+  $('f-editId').value = id;
+
+  // Fill fields
+  const fields = ['name','gender','dob','phone','whatsapp','email','address','area','city','region',
+    'occupation','education','maritalStatus','spouseName','children','salvationDate','howHeard',
+    'prevChurch','prevChurchName','baptised','baptismDate','holySpiritReceived','status'];
+  fields.forEach(f => {
+    const el = $('f-'+f);
+    if (el) el.value = c[f]||'';
+  });
+
+  // Radio groups
+  ['r-gender','r-prevChurch','r-baptised','r-holySpiritReceived','r-status'].forEach(gid => {
+    const field = gid.replace('r-','');
+    const val = c[field]||'';
+    document.querySelectorAll(`#${gid} .radio-opt`).forEach(b => {
+      b.classList.toggle('sel', b.dataset.v === val);
+    });
+  });
+}
+
+function editFromDetail() {
+  if (detailId) editConvert(detailId);
+}
+
+async function submitConvert(e) {
+  e.preventDefault();
+  const id = $('f-editId').value;
+  const data = {
+    name:$('f-name').value.trim(), gender:radio('r-gender'),
+    dob:$('f-dob').value, phone:$('f-phone').value.trim(),
+    whatsapp:$('f-whatsapp').value.trim(), email:$('f-email').value.trim(),
+    address:$('f-address').value.trim(), area:$('f-area').value.trim(),
+    city:$('f-city').value.trim(), region:$('f-region').value.trim(),
+    occupation:$('f-occupation').value.trim(), education:$('f-education').value,
+    maritalStatus:$('f-maritalStatus').value, spouseName:$('f-spouseName').value.trim(),
+    children:$('f-children').value,
+    salvationDate:$('f-salvationDate').value, howHeard:$('f-howHeard').value,
+    prevChurch:radio('r-prevChurch'), prevChurchName:$('f-prevChurchName').value.trim(),
+    baptised:radio('r-baptised'), baptismDate:$('f-baptismDate').value,
+    holySpiritReceived:radio('r-holySpiritReceived'),
+    status:radio('r-status')||'Active',
+  };
+
+  const btn = $('regSubmitBtn');
+  btn.disabled = true; btn.innerHTML = '<div class="skeleton" style="width:80px;height:14px"></div>';
+
+  try {
+    if (id) {
+      // Update
+      if (configured()) { await apiPost({ action:'updateConvert', data:{...data,id} }); }
+      const idx = S.converts.findIndex(c=>c.id===id);
+      if (idx>=0) S.converts[idx] = {...S.converts[idx],...data};
+      toast('Record updated ✓');
+    } else {
+      // Add
+      const tmpId = 'tmp_'+Date.now();
+      const regNo = 'ABG-'+String(S.converts.length+1).padStart(3,'0');
+      S.converts.unshift({...data, id:tmpId, regNo});
+      if (configured()) {
+        const res = await apiPost({ action:'addConvert', data });
+        if (res.success) {
+          const idx = S.converts.findIndex(c=>c.id===tmpId);
+          if (idx>=0) { S.converts[idx].id=res.id; S.converts[idx].regNo=res.regNo||regNo; }
+        }
+      }
+      toast('Convert registered ✓');
+    }
+    refreshAll();
+    editMode = false;
+    navigate('converts');
+  } catch(err) {
+    toast('Save failed — check connection', 'err');
+  }
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Save Convert`;
+}
+
+async function deleteConvert(id) {
+  if (!confirm('Delete this convert record? This cannot be undone.')) return;
+  S.converts = S.converts.filter(c=>c.id!==id);
+  if (configured()) { try { await apiPost({ action:'deleteConvert', id }); } catch(e){} }
+  refreshAll();
+  closeDrawer('detailDrawer');
+  toast('Record deleted');
+}
+
+function deleteFromDetail() { if(detailId) deleteConvert(detailId); }
+
+// ── DETAIL DRAWER ─────────────────────────────────────────────
+function openDetail(id) {
+  detailId = id;
+  const c = S.converts.find(x=>x.id===id);
+  if (!c) return;
+  const m = S.mentors.find(x=>x.convertId===id)||{};
+  const myAtt  = S.attendance.filter(a=>a.convertId===id);
+  const myClass = S.classData.filter(cl=>cl.convertId===id);
+
+  $('ddTitle').textContent = c.name||'—';
+  $('ddSub').textContent   = c.regNo||'';
+
+  const pTotal = myAtt.length;
+  const pCount = myAtt.filter(a=>a.status==='P').length;
+  const attPct = pTotal > 0 ? Math.round(pCount/pTotal*100)+'%' : 'No records';
+
+  const classRows = MODULES.map(mod => {
+    const r = myClass.find(cl=>String(cl.module)===String(mod.n));
+    const done = r?.completed==='Yes';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="width:22px;height:22px;border-radius:6px;background:${done?'var(--green)':'var(--warm)'};color:${done?'#fff':'var(--ink4)'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${mod.n}</div>
+      <div style="flex:1;font-size:12px;color:var(--ink2)">${mod.title}</div>
+      <div style="font-size:11px;font-weight:600;color:${done?'var(--green)':'var(--ink4)'}">${done?'✓ Done':'—'}</div>
+    </div>`;
+  }).join('');
+
+  $('ddBody').innerHTML = `
+    <div class="profile-head">
+      <div class="profile-avatar" style="${avStyle(c.name)}">${ini(c.name)}</div>
+      <div class="profile-info">
+        <div class="profile-name">${esc(c.name)}</div>
+        <div class="profile-reg">${esc(c.regNo||'')}</div>
+        <div class="profile-tags">
+          ${c.gender ? `<span class="ptag">${esc(c.gender)}</span>` : ''}
+          ${c.status ? `<span class="ptag">${esc(c.status)}</span>` : ''}
+          ${c.baptised==='Yes' ? '<span class="ptag">💧 Baptised</span>' : ''}
+          ${c.holySpiritReceived==='Yes' ? '<span class="ptag">🔥 H.S. Received</span>' : ''}
+        </div>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="di-label">Phone</div><div class="di-value"><a href="tel:${esc(c.phone)}" style="color:var(--blue)">${esc(c.phone||'—')}</a></div></div>
+      <div class="detail-item"><div class="di-label">Date of Salvation</div><div class="di-value">${fmtDate(c.salvationDate)}</div></div>
+      <div class="detail-item"><div class="di-label">Area / Community</div><div class="di-value">${esc(c.area||'—')}</div></div>
+      <div class="detail-item"><div class="di-label">Occupation</div><div class="di-value">${esc(c.occupation||'—')}</div></div>
+      <div class="detail-item"><div class="di-label">Marital Status</div><div class="di-value">${esc(c.maritalStatus||'—')}</div></div>
+      <div class="detail-item"><div class="di-label">How Heard of Us</div><div class="di-value">${esc(c.howHeard||'—')}</div></div>
+    </div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:10px">Mentor & Group</div>
+    <div class="detail-grid" style="margin-bottom:20px">
+      <div class="detail-item"><div class="di-label">Mentor</div><div class="di-value">${esc(m.mentorName||'Not assigned')}</div></div>
+      <div class="detail-item"><div class="di-label">Small Group</div><div class="di-value">${esc(m.smallGroup||'Not assigned')}</div></div>
+    </div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:10px">Attendance</div>
+    <div class="detail-item" style="margin-bottom:20px">
+      <div class="di-label">Attendance Rate</div>
+      <div class="di-value">${attPct} (${pCount}/${pTotal} Sundays)</div>
+    </div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:10px">Class Progress</div>
+    <div style="background:var(--ivory);border:1px solid var(--border);border-radius:10px;padding:12px 14px">${classRows}</div>
+  `;
+
+  document.getElementById('detailDrawer').classList.add('show');
+}
+
+function closeDrawer(id) { $(id).classList.remove('show'); }
+
+// ── ATTENDANCE PAGE ───────────────────────────────────────────
+function renderAttendancePage() {
+  const dateEl = $('attDate');
+  if (!dateEl.value) dateEl.value = today();
+  const selDate = dateEl.value;
+  const q = ($('attSearch').value||'').toLowerCase();
+
+  const list = S.converts.filter(c =>
+    !q || c.name.toLowerCase().includes(q) || (c.phone||'').includes(q)
+  );
+
+  if (!list.length) { $('attList').innerHTML = '<div class="empty"><strong>No converts found</strong></div>'; return; }
+
+  $('attList').innerHTML = list.map(c => {
+    const att = S.attendance.find(a=>a.convertId===c.id && a.date===selDate)||{};
+    const cur  = att.status||'';
+    const opts = ['P','A','L','E'].map(v =>
+      `<button class="att-opt ${v=== cur?v:''}" onclick="markAtt('${c.id}','${selDate}','${v}',this)">${v==='P'?'Present':v==='A'?'Absent':v==='L'?'Late':'Excused'}</button>`
+    ).join('');
+
+    return `<div class="att-week">
+      <div class="att-date">
+        <div style="font-size:12px;font-weight:600;color:var(--ink)">${esc(c.name)}</div>
+        <div style="font-size:10px;color:var(--ink4)">${esc(c.regNo||'')}</div>
+      </div>
+      <div class="att-opts">${opts}</div>
+      <input class="att-note" id="an-${c.id}" placeholder="Note (optional)" value="${esc(att.notes||'')}"
+        onchange="saveAttNote('${c.id}','${selDate}',this.value)">
+    </div>`;
+  }).join('');
+}
+
+async function markAtt(convertId, date, status, btn) {
+  const parent = btn.closest('.att-week');
+  parent.querySelectorAll('.att-opt').forEach(b => b.className = 'att-opt');
+  btn.className = `att-opt ${status}`;
+  const notes = ($(`an-${convertId}`)?.value)||'';
+
+  // Update state
+  const idx = S.attendance.findIndex(a=>a.convertId===convertId && a.date===date);
+  const rec = { convertId, date, status, notes, recordedBy:'' };
+  if (idx>=0) S.attendance[idx]={...S.attendance[idx],...rec};
+  else S.attendance.push({...rec, id:'tmp_'+Date.now()});
+
+  if (configured()) {
+    try { await apiPost({ action:'saveAttendance', data:rec }); } catch(e){}
+  }
+}
+
+async function saveAttNote(convertId, date, notes) {
+  const status = S.attendance.find(a=>a.convertId===convertId && a.date===date)?.status||'';
+  const rec = { convertId, date, status, notes };
+  if (configured()) {
+    try { await apiPost({ action:'saveAttendance', data:rec }); } catch(e){}
+  }
+}
+
+// ── CLASS PROGRESS PAGE ───────────────────────────────────────
+function renderClassPage() {
+  const q = ($('classSearch').value||'').toLowerCase();
+  const list = S.converts.filter(c => !q || c.name.toLowerCase().includes(q));
+
+  if (!list.length) { $('classList').innerHTML = '<div class="empty"><strong>No converts found</strong></div>'; return; }
+
+  $('classList').innerHTML = list.map(c => {
+    const mods = MODULES.map(mod => {
+      const r = S.classData.find(cl=>cl.convertId===c.id && String(cl.module)===String(mod.n))||{};
+      const done = r.completed==='Yes';
+      return `<div class="module-card">
+        <div class="mc-head">
+          <div class="mc-num">${mod.n}</div>
+          <div class="mc-title">${mod.title}</div>
+          <div class="mc-done">
+            <label class="check-lbl ${done?'done':''}">
+              <input type="checkbox" ${done?'checked':''} onchange="toggleModule('${c.id}',${mod.n},this.checked,'${esc(mod.title)}')">
+              ${done?'Completed':'Mark done'}
+            </label>
+          </div>
+        </div>
+        <div class="mc-body">
+          <div class="frow"><label class="flbl" style="font-size:10px">Date Taught</label>
+            <input class="finput" style="font-size:12px;padding:6px 10px" type="date" value="${r.dateTaught||''}"
+              onchange="saveModuleDate('${c.id}',${mod.n},'${esc(mod.title)}',this.value)">
+          </div>
+          <div class="frow"><label class="flbl" style="font-size:10px">Facilitator</label>
+            <input class="finput" style="font-size:12px;padding:6px 10px" placeholder="Name" value="${esc(r.facilitator||'')}"
+              onchange="saveModuleFacilitator('${c.id}',${mod.n},'${esc(mod.title)}',this.value)">
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const total = MODULES.length;
+    const done  = MODULES.filter(m=>S.classData.find(cl=>cl.convertId===c.id&&String(cl.module)===String(m.n)&&cl.completed==='Yes')).length;
+    const pct   = Math.round(done/total*100);
+
+    return `<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden;box-shadow:var(--sh)">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <span class="avatar-sm" style="${avStyle(c.name)}">${ini(c.name)}</span>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${esc(c.name)}</div>
+          <div style="font-size:11px;color:var(--ink4)">${esc(c.regNo||'')} &nbsp;·&nbsp; ${done}/${total} modules completed</div>
+        </div>
+        <div style="font-size:18px;font-family:'Cormorant Garamond',serif;font-weight:700;color:${pct===100?'var(--green)':'var(--navy)'}">${pct}%</div>
+      </div>
+      <div style="padding:16px 18px;display:none">${mods}</div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleModule(convertId, modNum, checked, modTitle) {
+  const rec = { convertId, module:modNum, moduleName:modTitle, completed: checked?'Yes':'No' };
+  const idx = S.classData.findIndex(cl=>cl.convertId===convertId && String(cl.module)===String(modNum));
+  if (idx>=0) S.classData[idx]={...S.classData[idx],...rec};
+  else S.classData.push({...rec, id:'tmp_'+Date.now()});
+  if (configured()) { try { await apiPost({ action:'saveClassProgress', data:rec }); } catch(e){} }
+  renderClassPage(); updateDashboard();
+}
+
+async function saveModuleDate(convertId, modNum, modTitle, dateTaught) {
+  const rec = { convertId, module:modNum, moduleName:modTitle, dateTaught };
+  const idx = S.classData.findIndex(cl=>cl.convertId===convertId && String(cl.module)===String(modNum));
+  if (idx>=0) S.classData[idx]={...S.classData[idx],...rec};
+  else S.classData.push({...rec, id:'tmp_'+Date.now()});
+  if (configured()) { try { await apiPost({ action:'saveClassProgress', data:rec }); } catch(e){} }
+}
+
+async function saveModuleFacilitator(convertId, modNum, modTitle, facilitator) {
+  const rec = { convertId, module:modNum, moduleName:modTitle, facilitator };
+  const idx = S.classData.findIndex(cl=>cl.convertId===convertId && String(cl.module)===String(modNum));
+  if (idx>=0) S.classData[idx]={...S.classData[idx],...rec};
+  else S.classData.push({...rec, id:'tmp_'+Date.now()});
+  if (configured()) { try { await apiPost({ action:'saveClassProgress', data:rec }); } catch(e){} }
+}
+
+// ── MENTOR PAGE ───────────────────────────────────────────────
+function renderMentorPage() {
+  const q = ($('mentorSearch').value||'').toLowerCase();
+  const list = S.converts.filter(c => {
+    const m = S.mentors.find(x=>x.convertId===c.id)||{};
+    const txt = `${c.name} ${m.mentorName||''} ${m.smallGroup||''}`.toLowerCase();
+    return !q || txt.includes(q);
+  });
+
+  if (!list.length) { $('mentorList').innerHTML = '<div class="empty"><strong>No converts found</strong></div>'; return; }
+
+  $('mentorList').innerHTML = list.map(c => {
+    const m = S.mentors.find(x=>x.convertId===c.id)||{};
+    const meetings = [1,2,3,4].map(n => {
+      const dKey = `meeting${n}Date`, sKey = `meeting${n}Status`;
+      return `<div class="meeting-row">
+        <span class="meeting-label">Meeting ${n}</span>
+        <input class="finput" style="font-size:12px;padding:6px 10px;width:140px" type="date" value="${m[dKey]||''}"
+          onchange="saveMentorField('${c.id}','${dKey}',this.value)">
+        <select class="fselect" style="font-size:12px;padding:6px 10px;width:140px"
+          onchange="saveMentorField('${c.id}','${sKey}',this.value)">
+          <option value="">—Status—</option>
+          ${MEETING_STATUS.map(s=>`<option ${m[sKey]===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>`;
+    }).join('');
+
+    const meetingsDone = [1,2,3,4].filter(n=>m[`meeting${n}Status`]==='Done').length;
+
+    return `<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden;box-shadow:var(--sh)">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <span class="avatar-sm" style="${avStyle(c.name)}">${ini(c.name)}</span>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${esc(c.name)}</div>
+          <div style="font-size:11px;color:var(--ink4)">${m.mentorName ? `Mentor: ${esc(m.mentorName)}` : '<span style="color:var(--red)">No mentor assigned</span>'}</div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--blue)">${meetingsDone}/4 meetings done</div>
+      </div>
+      <div style="padding:16px 18px;display:none">
+        <div class="mentor-card">
+          <div class="f2" style="margin-bottom:12px">
+            <div class="frow"><label class="flbl" style="font-size:10px">Mentor Name</label>
+              <input class="finput" style="font-size:13px;padding:8px 11px" placeholder="Mentor name" value="${esc(m.mentorName||'')}"
+                onchange="saveMentorField('${c.id}','mentorName',this.value)">
+            </div>
+            <div class="frow"><label class="flbl" style="font-size:10px">Mentor Phone</label>
+              <input class="finput" style="font-size:13px;padding:8px 11px" type="tel" placeholder="0244…" value="${esc(m.mentorPhone||'')}"
+                onchange="saveMentorField('${c.id}','mentorPhone',this.value)">
+            </div>
+          </div>
+          <div class="f2" style="margin-bottom:12px">
+            <div class="frow"><label class="flbl" style="font-size:10px">Small Group</label>
+              <input class="finput" style="font-size:13px;padding:8px 11px" placeholder="e.g. Group A" value="${esc(m.smallGroup||'')}"
+                onchange="saveMentorField('${c.id}','smallGroup',this.value)">
+            </div>
+            <div class="frow"><label class="flbl" style="font-size:10px">Date Assigned</label>
+              <input class="finput" style="font-size:13px;padding:8px 11px" type="date" value="${m.assignedDate||''}"
+                onchange="saveMentorField('${c.id}','assignedDate',this.value)">
+            </div>
+          </div>
+          <div class="fs-title" style="margin-top:8px">Meeting Log</div>
+          ${meetings}
+          <div class="frow" style="margin-top:10px"><label class="flbl" style="font-size:10px">Mentor Notes</label>
+            <textarea class="ftextarea" style="min-height:56px;font-size:12px" placeholder="Any observations or concerns…"
+              onchange="saveMentorField('${c.id}','notes',this.value)">${esc(m.notes||'')}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function saveMentorField(convertId, field, value) {
+  const idx = S.mentors.findIndex(m=>m.convertId===convertId);
+  if (idx>=0) S.mentors[idx][field] = value;
+  else S.mentors.push({ convertId, [field]:value, id:'tmp_'+Date.now() });
+  const m = S.mentors.find(x=>x.convertId===convertId)||{};
+  if (configured()) {
+    try { await apiPost({ action:'saveMentor', data:{...m, convertId} }); } catch(e){}
+  }
+  updateDashboard();
+}
+
+// ── Radio buttons ─────────────────────────────────────────────
+function pickRadio(groupId, btn) {
+  document.querySelectorAll(`#${groupId} .radio-opt`).forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+// ── Sync state ────────────────────────────────────────────────
+function setSyncState(state, msg) {
+  const dot = $('syncDot'), txt = $('syncTxt');
+  dot.className = 'sync-dot'+(state==='loading'?' loading':state==='error'?' error':'');
+  txt.textContent = msg;
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+let toastT;
+function toast(msg, type='ok') {
+  $('tdot').className = 'tdot'+(type==='warn'?' warn':type==='err'?' err':'');
+  $('tmsg').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>$('toast').classList.remove('show'), 3000);
+}
+
+// ── DEMO DATA ─────────────────────────────────────────────────
+function demoConverts() {
+  return [
+    {id:'1',regNo:'ABG-001',name:'Abena Owusu',gender:'Female',dob:'1998-04-12',phone:'0244567890',whatsapp:'0244567890',email:'',address:'',area:'Dansoman',city:'Accra',region:'Greater Accra',occupation:'Teacher',education:'Tertiary/University',maritalStatus:'Single',spouseName:'',children:'0',salvationDate:'2024-11-03',howHeard:'Friend / Family',prevChurch:'Yes',prevChurchName:'Grace Chapel',baptised:'Yes',baptismDate:'2024-11-17',holySpiritReceived:'Yes',status:'Active',createdAt:'2024-11-03'},
+    {id:'2',regNo:'ABG-002',name:'Kofi Asante',gender:'Male',dob:'2000-08-22',phone:'0201234567',whatsapp:'',email:'',address:'',area:'Lapaz',city:'Accra',region:'Greater Accra',occupation:'Student',education:'SHS/Secondary',maritalStatus:'Single',spouseName:'',children:'0',salvationDate:'2024-11-03',howHeard:'Street Evangelism',prevChurch:'No',prevChurchName:'',baptised:'No',baptismDate:'',holySpiritReceived:'No',status:'Active',createdAt:'2024-11-03'},
+    {id:'3',regNo:'ABG-003',name:'Efua Darko',gender:'Female',dob:'1990-01-15',phone:'0277890123',whatsapp:'0277890123',email:'',address:'',area:'Kasoa',city:'Kasoa',region:'Central',occupation:'Trader',education:'JHS/Middle',maritalStatus:'Married',spouseName:'Kwame Darko',children:'2',salvationDate:'2024-10-27',howHeard:'Revival / Crusade',prevChurch:'No',prevChurchName:'',baptised:'No',baptismDate:'',holySpiritReceived:'Not Sure',status:'Pending',createdAt:'2024-10-27'},
+    {id:'4',regNo:'ABG-004',name:'Kwame Boateng',gender:'Male',dob:'1985-06-30',phone:'0264321098',whatsapp:'0264321098',email:'',address:'',area:'Spintex',city:'Accra',region:'Greater Accra',occupation:'Engineer',education:'Tertiary/University',maritalStatus:'Married',spouseName:'Ama Boateng',children:'3',salvationDate:'2024-11-10',howHeard:'Social Media',prevChurch:'Yes',prevChurchName:'Victory Bible Church',baptised:'Yes',baptismDate:'2024-11-24',holySpiritReceived:'Yes',status:'Active',createdAt:'2024-11-10'},
+    {id:'5',regNo:'ABG-005',name:'Akosua Mensah',gender:'Female',dob:'1995-12-05',phone:'0233456789',whatsapp:'',email:'',address:'',area:'Madina',city:'Accra',region:'Greater Accra',occupation:'Nurse',education:'Tertiary/University',maritalStatus:'Single',spouseName:'',children:'0',salvationDate:'2024-10-20',howHeard:'Friend / Family',prevChurch:'No',prevChurchName:'',baptised:'No',baptismDate:'',holySpiritReceived:'No',status:'Inactive',createdAt:'2024-10-20'},
+  ];
+}
+function demoAtt() {
+  return [
+    {id:'a1',convertId:'1',date:'2024-11-10',status:'P',notes:'',recordedBy:''},
+    {id:'a2',convertId:'1',date:'2024-11-17',status:'P',notes:'',recordedBy:''},
+    {id:'a3',convertId:'1',date:'2024-11-24',status:'A',notes:'Sick',recordedBy:''},
+    {id:'a4',convertId:'2',date:'2024-11-10',status:'P',notes:'',recordedBy:''},
+    {id:'a5',convertId:'2',date:'2024-11-17',status:'L',notes:'Arrived late',recordedBy:''},
+    {id:'a6',convertId:'3',date:'2024-11-10',status:'A',notes:'',recordedBy:''},
+    {id:'a7',convertId:'4',date:'2024-11-10',status:'P',notes:'',recordedBy:''},
+    {id:'a8',convertId:'4',date:'2024-11-17',status:'P',notes:'',recordedBy:''},
+  ];
+}
+function demoClass() {
+  return [
+    {id:'c1',convertId:'1',module:'1',moduleName:'Assurance of Salvation',dateTaught:'2024-11-10',completed:'Yes',facilitator:'Bro. Emmanuel'},
+    {id:'c2',convertId:'1',module:'2',moduleName:'Baptism & the Holy Spirit',dateTaught:'2024-11-17',completed:'Yes',facilitator:'Bro. Emmanuel'},
+    {id:'c3',convertId:'1',module:'3',moduleName:'Christian Living',dateTaught:'2024-11-24',completed:'Yes',facilitator:'Bro. Emmanuel'},
+    {id:'c4',convertId:'4',module:'1',moduleName:'Assurance of Salvation',dateTaught:'2024-11-17',completed:'Yes',facilitator:'Bro. Joseph'},
+  ];
+}
+function demoMentors() {
+  return [
+    {id:'m1',convertId:'1',mentorName:'Sis. Adwoa',mentorPhone:'0244111222',smallGroup:'Group A',groupLeader:'Bro. Kwame',assignedDate:'2024-11-05',meeting1Date:'2024-11-12',meeting1Status:'Done',meeting2Date:'2024-11-26',meeting2Status:'Done',meeting3Date:'',meeting3Status:'',meeting4Date:'',meeting4Status:'',notes:'Making great progress'},
+    {id:'m2',convertId:'2',mentorName:'Bro. Samuel',mentorPhone:'0201555666',smallGroup:'Group B',groupLeader:'Sis. Grace',assignedDate:'2024-11-05',meeting1Date:'2024-11-13',meeting1Status:'Done',meeting2Date:'2024-11-27',meeting2Status:'Missed',meeting3Date:'',meeting3Status:'',meeting4Date:'',meeting4Status:'',notes:''},
+    {id:'m3',convertId:'4',mentorName:'Bro. Emmanuel',mentorPhone:'0264777888',smallGroup:'Group C',groupLeader:'Bro. Emmanuel',assignedDate:'2024-11-12',meeting1Date:'2024-11-19',meeting1Status:'Done',meeting2Date:'',meeting2Status:'',meeting3Date:'',meeting3Status:'',meeting4Date:'',meeting4Status:'',notes:''},
+  ];
+}
+
+// ── AUTHENTICATION ────────────────────────────────────────────
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  USERS — add, remove or change credentials here            ║
+// ║  Format: { username, password, displayName, role }         ║
+// ╚══════════════════════════════════════════════════════════════╝
+const USERS = [
+  { username: 'leader',   password: 'ABG@Leader1',   displayName: 'Committee Leader',   role: 'Leader'   },
+  { username: 'member1',  password: 'ABG@Member1',   displayName: 'Committee Member 1', role: 'Member'   },
+  { username: 'member2',  password: 'ABG@Member2',   displayName: 'Committee Member 2', role: 'Member'   },
+  { username: 'admin',    password: 'ABG@Admin2024', displayName: 'Church Admin',        role: 'Admin'    },
+];
+
+const SESSION_KEY = 'abg_ns_session';
+
+function getSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+
+function setSession(user) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    username: user.username,
+    displayName: user.displayName,
+    role: user.role,
+    loginTime: new Date().toISOString(),
+  }));
+}
+
+function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
+function doLogin(e) {
+  e.preventDefault();
+  const username = $('loginUser').value.trim().toLowerCase();
+  const password = $('loginPass').value;
+  const btn      = $('loginBtn');
+  const errEl    = $('loginError');
+
+  // brief loading state
+  btn.disabled = true;
+  btn.innerHTML = '<div style="width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;animation:spin .7s linear infinite"></div>';
+
+  setTimeout(() => {
+    const user = USERS.find(u => u.username === username && u.password === password);
+    if (user) {
+      setSession(user);
+      errEl.classList.remove('show');
+      showApp(user);
+    } else {
+      errEl.classList.remove('show');
+      void errEl.offsetWidth; // reflow to retrigger animation
+      errEl.classList.add('show');
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Sign In`;
+      $('loginPass').value = '';
+      $('loginPass').focus();
+    }
+  }, 600);
+}
+
+function showApp(user) {
+  // Populate user pill
+  $('userAvatar').textContent  = user.displayName.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  $('userName').textContent    = user.displayName;
+  $('userRole').textContent    = user.role;
+
+  // Animate login screen out
+  const ls = $('loginScreen');
+  ls.style.transition = 'opacity .35s ease, transform .35s ease';
+  ls.style.opacity = '0';
+  ls.style.transform = 'scale(1.03)';
+  setTimeout(() => { ls.style.display = 'none'; }, 360);
+
+  loadAll();
+}
+
+function doLogout() {
+  if (!confirm('Sign out of the New Souls Database?')) return;
+  clearSession();
+  // Reset login form
+  $('loginUser').value = '';
+  $('loginPass').value = '';
+  $('loginError').classList.remove('show');
+  $('loginBtn').innerHTML = `<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Sign In`;
+  const ls = $('loginScreen');
+  ls.style.display = 'flex';
+  ls.style.opacity = '0';
+  ls.style.transform = 'scale(.97)';
+  void ls.offsetWidth;
+  ls.style.transition = 'opacity .3s ease, transform .3s ease';
+  ls.style.opacity    = '1';
+  ls.style.transform  = 'none';
+  $('loginUser').focus();
+  closeMobSidebar();
+  toast('Signed out successfully');
+}
+
+function togglePw() {
+  const inp = $('loginPass');
+  const isText = inp.type === 'text';
+  inp.type = isText ? 'password' : 'text';
+  $('pwEye').outerHTML = isText
+    ? `<svg id="pwEye" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+    : `<svg id="pwEye" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+$('attDate').value = today();
+
+// Check for existing session on page load
+const existingSession = getSession();
+if (existingSession) {
+  showApp(existingSession);
+} else {
+  // Show login, keep app hidden until authenticated
+  setTimeout(() => $('loginUser').focus(), 400);
+}
+</script>
+</body>
+</html>
